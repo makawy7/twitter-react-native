@@ -22,10 +22,26 @@ const Tab = createBottomTabNavigator();
 const HomeStackNavigator = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Tab" component={TabNavigator} />
-      <Stack.Screen name="New Tweet" component={NewTweet} />
-      <Stack.Screen name="Tweet Screen" component={TweetScreen} />
-      <Stack.Screen name="Profile Screen" component={ProfileScreen} />
+      <Stack.Screen
+        name="Tab"
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="New Tweet"
+        component={NewTweet}
+        options={{ title: '' }}
+      />
+      <Stack.Screen
+        name="Tweet Screen"
+        component={TweetScreen}
+        options={{ title: '' }}
+      />
+      <Stack.Screen
+        name="Profile Screen"
+        component={ProfileScreen}
+        options={{ title: '' }}
+      />
     </Stack.Navigator>
   );
 };
@@ -71,7 +87,7 @@ export default function App() {
     <NavigationContainer>
       <Drawer.Navigator
         initialRouteName="Home"
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: true }}
       >
         <Drawer.Screen name="Home" component={HomeStackNavigator} />
         <Drawer.Screen name="Settings Screen" component={SettingsScreen} />
