@@ -8,18 +8,30 @@ import HomeScreen from './screens/HomeScreen';
 import NewTweet from './screens/NewTweet';
 import TweetScreen from './screens/TweetScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 
 const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
+
+const HomeStackNavigator = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="Home Screen" component={HomeScreen} />
+      <Stack.Screen name="New Tweet" component={NewTweet} />
+      <Stack.Screen name="Tweet Screen" component={TweetScreen} />
+      <Stack.Screen name="Profile Screen" component={ProfileScreen} />
+    </Stack.Navigator>
+  );
+};
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home Screen" component={HomeScreen} />
-        <Stack.Screen name="New Tweet" component={NewTweet} />
-        <Stack.Screen name="Tweet Screen" component={TweetScreen} />
-        <Stack.Screen name="Profile Screen" component={ProfileScreen} />
-      </Stack.Navigator>
+      <Drawer.Navigator initialRouteName="Home">
+        <Drawer.Screen name="Home" component={HomeStackNavigator} />
+        <Drawer.Screen name="Settings Screen" component={SettingsScreen} />
+      </Drawer.Navigator>
     </NavigationContainer>
   );
 }
