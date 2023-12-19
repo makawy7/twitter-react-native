@@ -1,5 +1,4 @@
 import {
-  Button,
   FlatList,
   Image,
   Platform,
