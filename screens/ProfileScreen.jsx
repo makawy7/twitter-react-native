@@ -1,10 +1,53 @@
-import { Image, Linking, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Linking, StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
 
+const data = [
+  {
+    id: '1',
+    title: 'First Item',
+  },
+  {
+    id: '2',
+    title: 'Second Item',
+  },
+  {
+    id: '3',
+    title: 'Third Item',
+  },
+  {
+    id: '4',
+    title: 'Fourth Item',
+  },
+  {
+    id: '5',
+    title: 'Fifth Item',
+  },
+  {
+    id: '6',
+    title: 'Sixth Item',
+  },
+  {
+    id: '7',
+    title: 'Seventh Item',
+  },
+  {
+    id: '8',
+    title: 'Eight Item',
+  },
+  {
+    id: '9',
+    title: 'Ninth Item',
+  },
+  {
+    id: '10',
+    title: 'Tenth Item',
+  },
+];
+
 export default function ProfileScreen() {
-  return (
-    <View style={styles.container}>
+  const ProfileHeader = () => (
+    <View style={styles.seperator}>
       <Image
         style={styles.backgroundImage}
         source={{
@@ -12,9 +55,9 @@ export default function ProfileScreen() {
         }}
       />
 
-      <View style={styles.avatarContainer}>
+      <View style={styles.profileImageContainer}>
         <Image
-          style={styles.avatar}
+          style={styles.profileImage}
           source={{
             uri: 'https://reactnative.dev/img/tiny_logo.png',
           }}
@@ -54,7 +97,106 @@ export default function ProfileScreen() {
           <Text style={styles.textGray}>Joined March 2009</Text>
         </View>
       </View>
+
+      <View style={styles.followContainer}>
+        <TouchableOpacity style={styles.followItem}>
+          <Text style={styles.followItemNumber}>409</Text>
+          <Text>Following</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.followItem}>
+          <Text style={styles.followItemNumber}>2,354</Text>
+          <Text>Followers</Text>
+        </TouchableOpacity>
+      </View>
     </View>
+  );
+
+  const renderItem = ({ item }) => (
+    <View style={styles.tweetContainer}>
+      <TouchableOpacity onPress={() => goToProfile()}>
+        <Image
+          style={styles.avatar}
+          source={{
+            uri: 'https://reactnative.dev/img/tiny_logo.png',
+          }}
+        />
+      </TouchableOpacity>
+      <View style={{ flex: 1 }}>
+        <TouchableOpacity
+          style={styles.flexRow}
+          onPress={() => goToSingleTweet()}
+        >
+          <Text numberOfLines={1} style={styles.tweetName}>
+            {item.title}
+          </Text>
+          <Text numberOfLines={1} style={styles.tweetHandle}>
+            @username
+          </Text>
+          <Text>&middot;</Text>
+          <Text numberOfLines={1} style={styles.tweetHandle}>
+            9m
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tweetContentContainer}
+          onPress={() => goToSingleTweet()}
+        >
+          <Text style={styles.tweetContent}>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam aut
+            vel modi quia maxime doloribus ipsa mollitia, eum at eveniet.
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.tweetEngagement}>
+          <TouchableOpacity style={styles.flexRow}>
+            <EvilIcons
+              name="comment"
+              size={22}
+              color="gray"
+              style={{ marginRight: 2 }}
+            />
+            <Text style={styles.textGray}>32</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.flexRow}>
+            <EvilIcons
+              name="retweet"
+              size={22}
+              color="gray"
+              style={{ marginRight: 2 }}
+            />
+            <Text style={styles.textGray}>5,456</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.flexRow}>
+            <EvilIcons
+              name="heart"
+              size={22}
+              color="gray"
+              style={{ marginRight: 2 }}
+            />
+            <Text style={styles.textGray}>456</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.flexRow}>
+            <EvilIcons
+              name={Platform.OS === 'ios' ? 'share-apple' : 'share-google'}
+              size={22}
+              color="gray"
+              style={{ marginRight: 2 }}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <FlatList
+      style={styles.container}
+      data={data}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      ItemSeparatorComponent={() => <View style={styles.tweetSeperator}></View>}
+      ListHeaderComponent={ProfileHeader}
+    />
   );
 }
 
@@ -63,18 +205,21 @@ const styles = StyleSheet.create({
   textGray: {
     color: 'gray',
   },
+  flexRow: {
+    flexDirection: 'row',
+  },
   backgroundImage: {
     width: '100%',
     height: 120,
   },
-  avatar: {
+  profileImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
     borderWidth: 4,
     borderColor: 'white',
   },
-  avatarContainer: {
+  profileImageContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
@@ -129,5 +274,54 @@ const styles = StyleSheet.create({
   },
   linkItem: {
     flexDirection: 'row',
+  },
+  followContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    gap: 14,
+  },
+  followItem: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  followItemNumber: {
+    fontWeight: 'bold',
+  },
+  seperator: { borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  tweetContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  tweetSeperator: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    marginRight: 8,
+    borderRadius: 21,
+  },
+  tweetName: {
+    fontWeight: 'bold',
+    marginRight: 2,
+    color: '#222222',
+  },
+  tweetHandle: {
+    marginHorizontal: 6,
+  },
+  tweetContentContainer: {
+    marginTop: 4,
+  },
+  tweetContent: {
+    lineHeight: 20,
+  },
+  tweetEngagement: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
 });
