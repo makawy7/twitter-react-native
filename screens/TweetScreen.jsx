@@ -6,22 +6,23 @@ import axiosInstance from '../utils/axiosConfig';
 import { format } from 'date-fns';
 
 export default function TweetScreen({ route, navigation }) {
-  const goToProfile = () => {
-    navigation.navigate('Profile Screen');
-  };
   const { tweetId } = route.params;
   const [tweet, setTweet] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axiosInstance
-      .get(`/tweet/${tweetId}`)
+      .get(`/tweets/${tweetId}`)
       .then((res) => {
         setTweet(res.data);
         setLoading(false);
       })
       .catch((err) => console.log(err));
   }, []);
+
+  const goToProfile = (userId) => {
+    navigation.navigate('Profile Screen', { userId });
+  };
 
   return (
     <View style={styles.container}>
@@ -32,7 +33,7 @@ export default function TweetScreen({ route, navigation }) {
           <View style={styles.profileContainer}>
             <TouchableOpacity
               onPress={() => {
-                goToProfile();
+                goToProfile(tweet.user.id);
               }}
               style={styles.flexRow}
             >

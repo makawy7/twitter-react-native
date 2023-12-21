@@ -79,21 +79,23 @@ export default function HomeScreen({ route, navigation }) {
     }
   };
 
-  const goToProfile = () => {
-    navigation.navigate('Profile Screen');
+  const goToProfile = (userId) => {
+    navigation.navigate('Profile Screen', { userId });
   };
+
   const goToSingleTweet = (tweetId) => {
     navigation.navigate('Tweet Screen', {
       tweetId,
     });
   };
+  
   const goToNewTweet = () => {
     navigation.navigate('New Tweet');
   };
 
   const renderItem = ({ item: tweet }) => (
     <View style={styles.tweetContainer}>
-      <TouchableOpacity onPress={() => goToProfile()}>
+      <TouchableOpacity onPress={() => goToProfile(tweet.user.id)}>
         <Image
           style={styles.avatar}
           source={{
@@ -102,7 +104,10 @@ export default function HomeScreen({ route, navigation }) {
         />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
-        <TouchableOpacity style={styles.flexRow} onPress={() => goToProfile()}>
+        <TouchableOpacity
+          style={styles.flexRow}
+          onPress={() => goToProfile(tweet.user.id)}
+        >
           <Text numberOfLines={1} style={styles.tweetName}>
             {tweet?.user?.name}
           </Text>

@@ -1,51 +1,42 @@
-import { FlatList, Image, Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Linking,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
+import axiosInstance from '../utils/axiosConfig';
+import { useEffect, useState } from 'react';
+import { format, formatDistanceToNowStrict } from 'date-fns';
+import locale from 'date-fns/locale/en-US';
+import formatDistance from '../utils/formatDistanceCustom';
 
-const data = [
-  {
-    id: '1',
-    title: 'First Item',
-  },
-  {
-    id: '2',
-    title: 'Second Item',
-  },
-  {
-    id: '3',
-    title: 'Third Item',
-  },
-  {
-    id: '4',
-    title: 'Fourth Item',
-  },
-  {
-    id: '5',
-    title: 'Fifth Item',
-  },
-  {
-    id: '6',
-    title: 'Sixth Item',
-  },
-  {
-    id: '7',
-    title: 'Seventh Item',
-  },
-  {
-    id: '8',
-    title: 'Eight Item',
-  },
-  {
-    id: '9',
-    title: 'Ninth Item',
-  },
-  {
-    id: '10',
-    title: 'Tenth Item',
-  },
-];
+export default function ProfileScreen({ route, navigation }) {
+  const { userId } = route.params;
+  const [user, setUser] = useState({});
+  const [loading, setLoading] = useState(true);
 
-export default function ProfileScreen() {
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  const getUser = () => {
+    axiosInstance
+      .get(`/users/${userId}`)
+      .then((res) => {
+        setUser(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+  };
+
   const ProfileHeader = () => (
     <View style={styles.seperator}>
       <Image
@@ -59,7 +50,7 @@ export default function ProfileScreen() {
         <Image
           style={styles.profileImage}
           source={{
-            uri: 'https://reactnative.dev/img/tiny_logo.png',
+            uri: user.avatar,
           }}
         />
         <TouchableOpacity style={styles.followButton}>
@@ -68,33 +59,32 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.nameContainer}>
-        <Text style={styles.profileName}>Abdallah</Text>
-        <Text style={styles.profileHandle}>@username</Text>
+        <Text style={styles.profileName}>{user.name}</Text>
+        <Text style={styles.profileHandle}>@{user.username}</Text>
       </View>
 
       <View style={styles.profileContainer}>
-        <Text style={styles.profileContainerText}>
-          CEO of CEOs. PhD, MSc, SEO, HTML, CSS, JS Evangelist Pro Expert S Rank
-          Elite Best of the best.
-        </Text>
+        <Text style={styles.profileContainerText}>{user.profile}</Text>
       </View>
 
       <View style={styles.locationContainer}>
         <EvilIcons name="location" size={24} color="gray" />
-        <Text style={styles.textGray}>Toronto, Canada</Text>
+        <Text style={styles.textGray}>{user.location}</Text>
       </View>
 
       <View style={styles.linkContainer}>
         <TouchableOpacity
-          onPress={() => Linking.openURL('https://laracasts.com/')}
+          onPress={() => Linking.openURL(user.link)}
           style={styles.linkItem}
         >
           <EvilIcons name="link" size={24} color="gray" />
-          <Text style={styles.linkColor}>laracasts.com</Text>
+          <Text style={styles.linkColor}>{user.link_text}</Text>
         </TouchableOpacity>
         <View style={styles.linkItem}>
           <EvilIcons name="calendar" size={24} color="gray" />
-          <Text style={styles.textGray}>Joined March 2009</Text>
+          <Text style={styles.textGray}>
+            Joined {format(new Date(user.created_at), 'MMM yyyy')}
+          </Text>
         </View>
       </View>
 
@@ -111,40 +101,42 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item: tweet }) => (
     <View style={styles.tweetContainer}>
-      <TouchableOpacity onPress={() => goToProfile()}>
+      <TouchableOpacity onPress={() => goToProfile(user.id)}>
         <Image
           style={styles.avatar}
           source={{
-            uri: 'https://reactnative.dev/img/tiny_logo.png',
+            uri: user.avatar,
           }}
         />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
         <TouchableOpacity
           style={styles.flexRow}
-          onPress={() => goToSingleTweet()}
+          onPress={() => goToProfile(user.id)}
         >
           <Text numberOfLines={1} style={styles.tweetName}>
-            {item.title}
+            {user.name}
           </Text>
           <Text numberOfLines={1} style={styles.tweetHandle}>
-            @username
+            @{user.username}
           </Text>
           <Text>&middot;</Text>
           <Text numberOfLines={1} style={styles.tweetHandle}>
-            9m
+            {formatDistanceToNowStrict(tweet.created_at, {
+              locale: {
+                ...locale,
+                formatDistance,
+              },
+            })}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tweetContentContainer}
-          onPress={() => goToSingleTweet()}
+          onPress={() => goToSingleTweet(tweet.id)}
         >
-          <Text style={styles.tweetContent}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam aut
-            vel modi quia maxime doloribus ipsa mollitia, eum at eveniet.
-          </Text>
+          <Text style={styles.tweetContent}>{tweet.body}</Text>
         </TouchableOpacity>
 
         <View style={styles.tweetEngagement}>
@@ -188,10 +180,14 @@ export default function ProfileScreen() {
     </View>
   );
 
-  return (
+  return loading ? (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color="gray" />
+    </View>
+  ) : (
     <FlatList
       style={styles.container}
-      data={data}
+      data={user.tweets}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       ItemSeparatorComponent={() => <View style={styles.tweetSeperator}></View>}
