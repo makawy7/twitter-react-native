@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -7,24 +9,61 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import axiosInstance from '../utils/axiosConfig';
 
 export default function NewTweet({ navigation }) {
   const [tweet, setTweet] = useState('');
+  const [loading, isLoading] = useState(false);
+
   const sendTweet = () => {
-    navigation.navigate('Tab');
+    if (tweet.length === 0) {
+      Alert.alert('Please enter a tweet!');
+      return;
+    }
+
+    isLoading(true);
+    axiosInstance
+      .post('/tweets', {
+        body: tweet,
+      })
+      .then(() => {
+        navigation.navigate('Home Screen', {
+          newTweetAdded: true,
+        });
+        isLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        isLoading(false);
+      });
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.tweetButtonContainer}>
         <Text style={tweet.length > 250 ? styles.textRed : styles.colorGray}>
           Characters left: {280 - tweet.length}
         </Text>
-        <TouchableOpacity
-          onPress={() => sendTweet()}
-          style={styles.tweetButton}
-        >
-          <Text style={styles.tweetButtonText}>Tweet</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {loading && (
+            <ActivityIndicator style={{ marginRight: 4 }} color="gray" />
+          )}
+          <TouchableOpacity
+            onPress={() => sendTweet()}
+            style={styles.tweetButton}
+            disabled={loading}
+          >
+            <Text
+              style={
+                loading
+                  ? { ...styles.buttonDisabled, ...styles.tweetButtonText }
+                  : styles.tweetButtonText
+              }
+            >
+              Tweet
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.tweetBoxContainer}>
         <Image
@@ -79,6 +118,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     letterSpacing: 0.2,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   avatar: {
     width: 42,

@@ -11,21 +11,31 @@ import {
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import axiosInstance from '../utils/axiosConfig';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import locale from 'date-fns/locale/en-US';
 import formatDistance from '../utils/formatDistanceCustom';
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ route, navigation }) {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [isLastPage, setIsLastPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const flatListRef = useRef(null);
 
   useEffect(() => {
     getAllTweets();
   }, [page]);
+
+  // a new tweet has been submitted
+  useEffect(() => {
+    if (route.params?.newTweetAdded) {
+      page !== 1 ? setPage(1) : getAllTweets();
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+      navigation.setParams({ newTweetAdded: false });
+    }
+  }, [route.params?.newTweetAdded]);
 
   const getAllTweets = () => {
     axiosInstance
@@ -163,6 +173,7 @@ export default function HomeScreen({ navigation }) {
         <ActivityIndicator size="large" color="gray" />
       ) : (
         <FlatList
+          ref={flatListRef}
           data={data}
           renderItem={renderItem}
           keyExtractor={(tweet) => tweet.id}
