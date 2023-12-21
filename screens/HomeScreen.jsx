@@ -9,51 +9,28 @@ import {
 } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
-
-const data = [
-  {
-    id: '1',
-    title: 'First Item',
-  },
-  {
-    id: '2',
-    title: 'Second Item',
-  },
-  {
-    id: '3',
-    title: 'Third Item',
-  },
-  {
-    id: '4',
-    title: 'Fourth Item',
-  },
-  {
-    id: '5',
-    title: 'Fifth Item',
-  },
-  {
-    id: '6',
-    title: 'Sixth Item',
-  },
-  {
-    id: '7',
-    title: 'Seventh Item',
-  },
-  {
-    id: '8',
-    title: 'Eight Item',
-  },
-  {
-    id: '9',
-    title: 'Ninth Item',
-  },
-  {
-    id: '10',
-    title: 'Tenth Item',
-  },
-];
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { formatDistanceToNowStrict } from 'date-fns';
+import locale from 'date-fns/locale/en-US';
+import formatDistance from '../utils/formatDistanceCustom';
 
 export default function HomeScreen({ navigation }) {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    getAllTweets();
+  }, []);
+
+  const getAllTweets = () => {
+    axios
+      .get('http://192.168.1.6:8001/api/tweets')
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((err) => console.log(err));
+  };
+
   const goToProfile = () => {
     navigation.navigate('Profile Screen');
   };
@@ -64,13 +41,13 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('New Tweet');
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item: tweet }) => (
     <View style={styles.tweetContainer}>
       <TouchableOpacity onPress={() => goToProfile()}>
         <Image
           style={styles.avatar}
           source={{
-            uri: 'https://reactnative.dev/img/tiny_logo.png',
+            uri: tweet?.user?.avatar,
           }}
         />
       </TouchableOpacity>
@@ -80,24 +57,26 @@ export default function HomeScreen({ navigation }) {
           onPress={() => goToSingleTweet()}
         >
           <Text numberOfLines={1} style={styles.tweetName}>
-            {item.title}
+            {tweet?.user?.name}
           </Text>
           <Text numberOfLines={1} style={styles.tweetHandle}>
-            @username
+            @{tweet?.user?.username}
           </Text>
           <Text>&middot;</Text>
           <Text numberOfLines={1} style={styles.tweetHandle}>
-            9m
+            {formatDistanceToNowStrict(tweet.created_at, {
+              locale: {
+                ...locale,
+                formatDistance,
+              },
+            })}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tweetContentContainer}
           onPress={() => goToSingleTweet()}
         >
-          <Text style={styles.tweetContent}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam aut
-            vel modi quia maxime doloribus ipsa mollitia, eum at eveniet.
-          </Text>
+          <Text style={styles.tweetContent}>{tweet.body}</Text>
         </TouchableOpacity>
 
         <View style={styles.tweetEngagement}>
@@ -146,7 +125,7 @@ export default function HomeScreen({ navigation }) {
       <FlatList
         data={data}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(tweet) => tweet.id}
         ItemSeparatorComponent={() => (
           <View style={styles.tweetSeperator}></View>
         )}
