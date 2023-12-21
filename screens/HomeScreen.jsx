@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosConfig';
 import { useEffect, useState } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import locale from 'date-fns/locale/en-US';
@@ -25,11 +25,11 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     getAllTweets();
-  }, [page, isRefreshing]);
+  }, [page]);
 
   const getAllTweets = () => {
-    axios
-      .get(`http://192.168.1.6:8001/api/tweets?page=${page}`)
+    axiosInstance
+      .get(`/tweets?page=${page}`)
       .then((res) => {
         if (page === 1) {
           setData(res.data.data);
@@ -49,13 +49,18 @@ export default function HomeScreen({ navigation }) {
       .catch((err) => {
         console.log(err);
         setIsLoading(false);
-        setIsLoading(false);
+        setIsRefreshing(false);
       });
   };
 
   const handleRefresh = () => {
-    setPage(1);
     setIsRefreshing(true);
+    if (page !== 1) {
+      //this will trigger getAllTweets() inside useEffect
+      setPage(1);
+      return;
+    }
+    getAllTweets();
   };
 
   const handleEnd = () => {
@@ -67,8 +72,10 @@ export default function HomeScreen({ navigation }) {
   const goToProfile = () => {
     navigation.navigate('Profile Screen');
   };
-  const goToSingleTweet = () => {
-    navigation.navigate('Tweet Screen');
+  const goToSingleTweet = (tweetId) => {
+    navigation.navigate('Tweet Screen', {
+      tweetId,
+    });
   };
   const goToNewTweet = () => {
     navigation.navigate('New Tweet');
@@ -85,10 +92,7 @@ export default function HomeScreen({ navigation }) {
         />
       </TouchableOpacity>
       <View style={{ flex: 1 }}>
-        <TouchableOpacity
-          style={styles.flexRow}
-          onPress={() => goToSingleTweet()}
-        >
+        <TouchableOpacity style={styles.flexRow} onPress={() => goToProfile()}>
           <Text numberOfLines={1} style={styles.tweetName}>
             {tweet?.user?.name}
           </Text>
@@ -107,7 +111,7 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tweetContentContainer}
-          onPress={() => goToSingleTweet()}
+          onPress={() => goToSingleTweet(tweet.id)}
         >
           <Text style={styles.tweetContent}>{tweet.body}</Text>
         </TouchableOpacity>
