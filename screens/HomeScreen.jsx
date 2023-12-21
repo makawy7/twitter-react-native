@@ -18,31 +18,50 @@ import formatDistance from '../utils/formatDistanceCustom';
 
 export default function HomeScreen({ navigation }) {
   const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLastPage, setIsLastPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     getAllTweets();
-  }, []);
+  }, [page, isRefreshing]);
 
   const getAllTweets = () => {
     axios
-      .get('http://192.168.1.6:8001/api/tweets')
+      .get(`http://192.168.1.6:8001/api/tweets?page=${page}`)
       .then((res) => {
-        setData(res.data);
+        if (page === 1) {
+          setData(res.data.data);
+        } else {
+          setData([...data, ...res.data.data]);
+        }
+
+        if (!res.data.next_page_url) {
+          setIsLastPage(true);
+        } else {
+          setIsLastPage(false);
+        }
+
         setIsLoading(false);
         setIsRefreshing(false);
       })
       .catch((err) => {
         console.log(err);
         setIsLoading(false);
-        setIsLoading(false)
+        setIsLoading(false);
       });
   };
 
   const handleRefresh = () => {
+    setPage(1);
     setIsRefreshing(true);
-    getAllTweets();
+  };
+
+  const handleEnd = () => {
+    if (!isLastPage) {
+      setPage(page + 1);
+    }
   };
 
   const goToProfile = () => {
@@ -148,6 +167,11 @@ export default function HomeScreen({ navigation }) {
           )}
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
+          onEndReached={handleEnd}
+          onEndReachedThreshold={0}
+          ListFooterComponent={() =>
+            !isLastPage && <ActivityIndicator size="large" color="gray" />
+          }
         />
       )}
       <TouchableOpacity
