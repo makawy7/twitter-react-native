@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Platform,
@@ -17,6 +18,8 @@ import formatDistance from '../utils/formatDistanceCustom';
 
 export default function HomeScreen({ navigation }) {
   const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     getAllTweets();
@@ -27,8 +30,19 @@ export default function HomeScreen({ navigation }) {
       .get('http://192.168.1.6:8001/api/tweets')
       .then((res) => {
         setData(res.data);
+        setIsLoading(false);
+        setIsRefreshing(false);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+        setIsLoading(false);
+        setIsLoading(false)
+      });
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    getAllTweets();
   };
 
   const goToProfile = () => {
@@ -122,14 +136,20 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={(tweet) => tweet.id}
-        ItemSeparatorComponent={() => (
-          <View style={styles.tweetSeperator}></View>
-        )}
-      />
+      {isLoading === true ? (
+        <ActivityIndicator size="large" color="gray" />
+      ) : (
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(tweet) => tweet.id}
+          ItemSeparatorComponent={() => (
+            <View style={styles.tweetSeperator}></View>
+          )}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
       <TouchableOpacity
         onPress={() => goToNewTweet()}
         style={styles.floatingButton}
@@ -150,6 +170,11 @@ const styles = StyleSheet.create({
   },
   textGray: {
     color: 'gray',
+  },
+  horizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10,
   },
   tweetContainer: {
     flexDirection: 'row',
