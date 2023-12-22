@@ -51,15 +51,16 @@ export const AuthProvider = ({ children }) => {
           axiosInstance
             .post('/logout')
             .then((res) => {
-              setUser(null);
-              SecureStore.deleteItemAsync('user');
               setError(null);
-              setLoading(false);
             })
             .catch((err) => {
               console.log(err.response);
               setError(err.response.data.message);
+            })
+            .finally(() => {
+              setUser(null);
               setLoading(false);
+              SecureStore.deleteItemAsync('user');
             });
         },
       }}

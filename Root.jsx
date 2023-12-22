@@ -109,7 +109,9 @@ export default function App() {
     //check SecureStore for the user token
     SecureStore.getItemAsync('user')
       .then((userItem) => {
-        setUser(userItem);
+        if (userItem) {
+          setUser(JSON.parse(userItem));
+        }
         setIsLoading(false);
       })
       .catch((err) => {
