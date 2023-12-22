@@ -1,19 +1,66 @@
 import { createContext, useContext, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import * as Device from 'expo-device';
+import axiosInstance from '../utils/axiosConfig';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         setUser,
+        error,
+        loading,
         login: (email, password) => {
-          setUser('Abdallah');
+          setLoading(true);
+          axiosInstance
+            .post('/login', {
+              email,
+              password,
+              device_name: Device.deviceName,
+            })
+            .then((res) => {
+              const userResponse = {
+                token: res.data.token,
+                id: res.data.user.id,
+                name: res.data.user.name,
+                email: res.data.user.email,
+                username: res.data.user.username,
+                avatar: res.data.user.avatar,
+              };
+              setUser(userResponse);
+              SecureStore.setItemAsync('user', JSON.stringify(userResponse));
+              setError(null);
+              setLoading(false);
+            })
+            .catch((err) => {
+              console.log(err.response.data.message);
+              setError(err.response.data.message);
+              setLoading(false);
+            });
         },
         logout: () => {
-          setUser(null);
+          setLoading(true);
+          axiosInstance.defaults.headers.common.Authorization = `Bearer ${user.token}`;
+          axiosInstance
+            .post('/logout')
+            .then((res) => {
+              setUser(null);
+              SecureStore.deleteItemAsync('user');
+              setError(null);
+              setLoading(false);
+            })
+            .catch((err) => {
+              console.log(err.response);
+              setError(err.response.data.message);
+              setLoading(false);
+            });
         },
       }}
     >

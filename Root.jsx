@@ -17,6 +17,7 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import { Ionicons } from '@expo/vector-icons';
 import LoginScreen from './screens/Auth/LoginScreen';
 import RegisterScreen from './screens/Auth/RegisterScreen';
+import * as SecureStore from 'expo-secure-store';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -105,9 +106,16 @@ export default function App() {
   const { user, setUser } = useAuthContext();
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    //check SecureStore for the user token
+    SecureStore.getItemAsync('user')
+      .then((userItem) => {
+        setUser(userItem);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setIsLoading(false);
+      });
   }, []);
 
   if (isLoading) {

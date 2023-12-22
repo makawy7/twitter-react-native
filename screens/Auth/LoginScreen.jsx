@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Button } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  ActivityIndicator,
+} from 'react-native';
 import { useAuthContext } from '../../context/AuthProvider';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuthContext();
+  const { login, error, loading } = useAuthContext();
 
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -34,6 +41,10 @@ const LoginScreen = ({ navigation }) => {
         onPress={() => navigation.navigate('Register Screen')}
         title="Register"
       />
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+      {loading && (
+        <ActivityIndicator style={{ marginTop: 8 }} size="small" color="gray" />
+      )}
     </View>
   );
 };
