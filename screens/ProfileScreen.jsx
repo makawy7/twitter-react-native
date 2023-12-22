@@ -6,192 +6,165 @@ import {
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import RenderItem from '../components/RenderItem';
 import { EvilIcons } from '@expo/vector-icons';
 import axiosInstance from '../utils/axiosConfig';
-import { useEffect, useState } from 'react';
-import { format, formatDistanceToNowStrict } from 'date-fns';
-import locale from 'date-fns/locale/en-US';
-import formatDistance from '../utils/formatDistanceCustom';
+import { format } from 'date-fns';
 
 export default function ProfileScreen({ route, navigation }) {
   const { userId } = route.params;
   const [user, setUser] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [userTweets, setUserTweets] = useState([]);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [userTweetsFirstLoad, setUserTweetsFirstLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [isLastPage, setIsLastPage] = useState(false);
 
   useEffect(() => {
     getUser();
   }, []);
+
+  useEffect(() => {
+    getUserTweets();
+  }, [page]);
 
   const getUser = () => {
     axiosInstance
       .get(`/users/${userId}`)
       .then((res) => {
         setUser(res.data);
-        setLoading(false);
+        setProfileLoading(false);
       })
       .catch((err) => {
         console.log(err);
-        setLoading(false);
+        setProfileLoading(false);
       });
   };
 
-  const ProfileHeader = () => (
-    <View style={styles.seperator}>
-      <Image
-        style={styles.backgroundImage}
-        source={{
-          uri: 'https://reactnative.dev/img/tiny_logo.png',
-        }}
-      />
+  const getUserTweets = () => {
+    axiosInstance
+      .get(`/users/${userId}/tweets?page=${page}`)
+      .then((res) => {
+        page === 1
+          ? setUserTweets(res.data.data)
+          : setUserTweets([...userTweets, ...res.data.data]);
+        !res.data.next_page_url ? setIsLastPage(true) : setIsLastPage(false);
+        setUserTweetsFirstLoad(false);
+        setIsRefreshing(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setUserTweetsFirstLoad(false);
+        setIsRefreshing(false);
+      });
+  };
 
-      <View style={styles.profileImageContainer}>
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    if (page !== 1) {
+      setPage(1);
+      return;
+    }
+    getUserTweets();
+  };
+
+  const handleEnd = () => {
+    if (userTweetsFirstLoad || isLastPage) return;
+    setPage(page + 1);
+  };
+
+  const ProfileHeader = () =>
+    profileLoading ? (
+      <View style={styles.container}>
+        <ActivityIndicator style={styles.mt4} size="large" color="gray" />
+      </View>
+    ) : (
+      <View style={styles.seperator}>
         <Image
-          style={styles.profileImage}
+          style={styles.backgroundImage}
           source={{
-            uri: user.avatar,
+            uri: 'https://reactnative.dev/img/tiny_logo.png',
           }}
         />
-        <TouchableOpacity style={styles.followButton}>
-          <Text style={styles.followButtonText}>Follow</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.nameContainer}>
-        <Text style={styles.profileName}>{user.name}</Text>
-        <Text style={styles.profileHandle}>@{user.username}</Text>
-      </View>
-
-      <View style={styles.profileContainer}>
-        <Text style={styles.profileContainerText}>{user.profile}</Text>
-      </View>
-
-      <View style={styles.locationContainer}>
-        <EvilIcons name="location" size={24} color="gray" />
-        <Text style={styles.textGray}>{user.location}</Text>
-      </View>
-
-      <View style={styles.linkContainer}>
-        <TouchableOpacity
-          onPress={() => Linking.openURL(user.link)}
-          style={styles.linkItem}
-        >
-          <EvilIcons name="link" size={24} color="gray" />
-          <Text style={styles.linkColor}>{user.link_text}</Text>
-        </TouchableOpacity>
-        <View style={styles.linkItem}>
-          <EvilIcons name="calendar" size={24} color="gray" />
-          <Text style={styles.textGray}>
-            Joined {format(new Date(user.created_at), 'MMM yyyy')}
-          </Text>
+        <View style={styles.profileImageContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{
+              uri: user.avatar,
+            }}
+          />
+          <TouchableOpacity style={styles.followButton}>
+            <Text style={styles.followButtonText}>Follow</Text>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.followContainer}>
-        <TouchableOpacity style={styles.followItem}>
-          <Text style={styles.followItemNumber}>409</Text>
-          <Text>Following</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.followItem}>
-          <Text style={styles.followItemNumber}>2,354</Text>
-          <Text>Followers</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+        <View style={styles.nameContainer}>
+          <Text style={styles.profileName}>{user.name}</Text>
+          <Text style={styles.profileHandle}>@{user.username}</Text>
+        </View>
 
-  const renderItem = ({ item: tweet }) => (
-    <View style={styles.tweetContainer}>
-      <TouchableOpacity onPress={() => goToProfile(user.id)}>
-        <Image
-          style={styles.avatar}
-          source={{
-            uri: user.avatar,
-          }}
-        />
-      </TouchableOpacity>
-      <View style={{ flex: 1 }}>
-        <TouchableOpacity
-          style={styles.flexRow}
-          onPress={() => goToProfile(user.id)}
-        >
-          <Text numberOfLines={1} style={styles.tweetName}>
-            {user.name}
-          </Text>
-          <Text numberOfLines={1} style={styles.tweetHandle}>
-            @{user.username}
-          </Text>
-          <Text>&middot;</Text>
-          <Text numberOfLines={1} style={styles.tweetHandle}>
-            {formatDistanceToNowStrict(tweet.created_at, {
-              locale: {
-                ...locale,
-                formatDistance,
-              },
-            })}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tweetContentContainer}
-          onPress={() => goToSingleTweet(tweet.id)}
-        >
-          <Text style={styles.tweetContent}>{tweet.body}</Text>
-        </TouchableOpacity>
+        <View style={styles.profileContainer}>
+          <Text style={styles.profileContainerText}>{user.profile}</Text>
+        </View>
 
-        <View style={styles.tweetEngagement}>
-          <TouchableOpacity style={styles.flexRow}>
-            <EvilIcons
-              name="comment"
-              size={22}
-              color="gray"
-              style={{ marginRight: 2 }}
-            />
-            <Text style={styles.textGray}>32</Text>
+        <View style={styles.locationContainer}>
+          <EvilIcons name="location" size={24} color="gray" />
+          <Text style={styles.textGray}>{user.location}</Text>
+        </View>
+
+        <View style={styles.linkContainer}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL(user.link)}
+            style={styles.linkItem}
+          >
+            <EvilIcons name="link" size={24} color="gray" />
+            <Text style={styles.linkColor}>{user.link_text}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.flexRow}>
-            <EvilIcons
-              name="retweet"
-              size={22}
-              color="gray"
-              style={{ marginRight: 2 }}
-            />
-            <Text style={styles.textGray}>5,456</Text>
+          <View style={styles.linkItem}>
+            <EvilIcons name="calendar" size={24} color="gray" />
+            <Text style={styles.textGray}>
+              Joined {format(new Date(user.created_at), 'MMM yyyy')}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.followContainer}>
+          <TouchableOpacity style={styles.followItem}>
+            <Text style={styles.followItemNumber}>409</Text>
+            <Text>Following</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.flexRow}>
-            <EvilIcons
-              name="heart"
-              size={22}
-              color="gray"
-              style={{ marginRight: 2 }}
-            />
-            <Text style={styles.textGray}>456</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.flexRow}>
-            <EvilIcons
-              name={Platform.OS === 'ios' ? 'share-apple' : 'share-google'}
-              size={22}
-              color="gray"
-              style={{ marginRight: 2 }}
-            />
+          <TouchableOpacity style={styles.followItem}>
+            <Text style={styles.followItemNumber}>2,354</Text>
+            <Text>Followers</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>
-  );
+    );
 
-  return loading ? (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="gray" />
-    </View>
-  ) : (
+  return (
     <FlatList
       style={styles.container}
-      data={user.tweets}
-      renderItem={renderItem}
+      data={userTweets}
       keyExtractor={(item) => item.id}
+      renderItem={(props) => <RenderItem {...props} />}
       ItemSeparatorComponent={() => <View style={styles.tweetSeperator}></View>}
       ListHeaderComponent={ProfileHeader}
+      ListEmptyComponent={() =>
+        profileLoading || <ActivityIndicator size="large" color="gray" />
+      }
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      onEndReached={handleEnd}
+      onEndReachedThreshold={0}
+      ListFooterComponent={() =>
+        isLastPage ||
+        userTweetsFirstLoad || <ActivityIndicator size="large" color="gray" />
+      }
     />
   );
 }
@@ -203,6 +176,9 @@ const styles = StyleSheet.create({
   },
   flexRow: {
     flexDirection: 'row',
+  },
+  mt4: {
+    marginTop: 10,
   },
   backgroundImage: {
     width: '100%',
