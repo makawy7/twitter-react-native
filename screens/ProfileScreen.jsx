@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useAuthContext } from '../context/AuthProvider';
 import RenderItem from '../components/RenderItem';
 import { EvilIcons } from '@expo/vector-icons';
 import axiosInstance from '../utils/axiosConfig';
@@ -23,9 +24,13 @@ export default function ProfileScreen({ route, navigation }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [isLastPage, setIsLastPage] = useState(false);
+  const { user: loggedInUser } = useAuthContext();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingStatusLoading, setFollowingStatusLoading] = useState(true);
 
   useEffect(() => {
     getUser();
+    getFollowingStatus();
   }, []);
 
   useEffect(() => {
@@ -43,6 +48,14 @@ export default function ProfileScreen({ route, navigation }) {
         console.log(err);
         setProfileLoading(false);
       });
+  };
+
+  const getFollowingStatus = () => {
+    axiosInstance
+      .get(`/is_following/${userId}`)
+      .then((res) => setIsFollowing(res.data))
+      .catch((err) => console.log(err.response.data))
+      .finally(() => setFollowingStatusLoading(false));
   };
 
   const getUserTweets = () => {
@@ -77,6 +90,25 @@ export default function ProfileScreen({ route, navigation }) {
     setPage(page + 1);
   };
 
+  const follow = () => {
+    setFollowingStatusLoading(true);
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${loggedInUser.token}`;
+    axiosInstance
+      .post(`/follow/${userId}`)
+      .then(() => setIsFollowing(true))
+      .catch((err) => console.log(err.response.data))
+      .finally(() => setFollowingStatusLoading(false));
+  };
+  const unfollow = () => {
+    setFollowingStatusLoading(true);
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${loggedInUser.token}`;
+    axiosInstance
+      .post(`/unfollow/${userId}`)
+      .then(() => setIsFollowing(false))
+      .catch((err) => console.log(err.response.data))
+      .finally(() => setFollowingStatusLoading(false));
+  };
+
   const ProfileHeader = () =>
     profileLoading ? (
       <View style={styles.container}>
@@ -98,9 +130,24 @@ export default function ProfileScreen({ route, navigation }) {
               uri: user.avatar,
             }}
           />
-          <TouchableOpacity style={styles.followButton}>
-            <Text style={styles.followButtonText}>Follow</Text>
-          </TouchableOpacity>
+          {userId === loggedInUser.id ||
+            (isFollowing ? (
+              <TouchableOpacity
+                style={styles.followButton}
+                disabled={followingStatusLoading}
+                onPress={() => unfollow()}
+              >
+                <Text style={styles.followButtonText}>Unfollow</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.followButton}
+                disabled={followingStatusLoading}
+                onPress={() => follow()}
+              >
+                <Text style={styles.followButtonText}>Follow</Text>
+              </TouchableOpacity>
+            ))}
         </View>
 
         <View style={styles.nameContainer}>
