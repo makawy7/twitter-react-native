@@ -10,6 +10,8 @@ import {
 import { useAuthContext } from '../../context/AuthProvider';
 import logo from '../../assets/logo.png';
 import { useState } from 'react';
+import axiosInstance from '../../utils/axiosConfig';
+import { ActivityIndicator } from 'react-native';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -17,10 +19,29 @@ const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { error, loading } = useAuthContext();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  function register(email, username, password, confirmPassword) {
-    Alert.alert('Register logic here!');
+  function register() {
+    setLoading(true);
+    axiosInstance
+      .post('/register', {
+        name,
+        email,
+        username,
+        password,
+        password_confirmation: confirmPassword,
+      })
+      .then(() => {
+        Alert.alert('User created! Please login.');
+        navigation.navigate('Login Screen');
+      })
+      .catch((err) => {
+        setError(err.response.data.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }
   return (
     <View style={styles.container}>
@@ -66,6 +87,7 @@ const RegisterScreen = ({ navigation }) => {
             placeholderTextColor="gray"
             autoCapitalize="none"
             secureTextEntry={true}
+            textContentType="password"
           />
           <TextInput
             style={styles.inputBox}
@@ -75,16 +97,17 @@ const RegisterScreen = ({ navigation }) => {
             placeholderTextColor="gray"
             autoCapitalize="none"
             secureTextEntry={true}
+            textContentType="password"
           />
         </View>
         <TouchableOpacity
           style={styles.loginButton}
-          onPress={() => register(email, username, password, confirmPassword)}
+          onPress={() => register()}
           disabled={loading}
         >
           {loading && (
             <ActivityIndicator
-              style={{ position: 'absolute', left: '35%' }}
+              style={{ position: 'absolute', left: '32%' }}
               size="small"
               color="white"
             />

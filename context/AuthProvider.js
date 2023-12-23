@@ -54,7 +54,6 @@ export const AuthProvider = ({ children }) => {
               setError(null);
             })
             .catch((err) => {
-              console.log(err.response);
               setError(err.response.data.message);
             })
             .finally(() => {
