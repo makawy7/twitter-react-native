@@ -29,12 +29,13 @@ export default function HomeScreen({ route, navigation }) {
 
   // a new tweet has been submitted
   useEffect(() => {
-    if (route.params?.newTweetAdded) {
+    if (route.params?.newTweetAdded || route.params?.tweetDeleted) {
       page !== 1 ? setPage(1) : getAllTweets();
       flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
       navigation.setParams({ newTweetAdded: false });
+      navigation.setParams({ tweetDeleted: false });
     }
-  }, [route.params?.newTweetAdded]);
+  }, [route.params?.newTweetAdded, route.params?.tweetDeleted]);
 
   const getAllTweets = () => {
     axiosInstance.defaults.headers.common.Authorization = `Bearer ${user.token}`;
