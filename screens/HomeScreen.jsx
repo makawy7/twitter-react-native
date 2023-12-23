@@ -12,8 +12,10 @@ import { useEffect, useRef, useState } from 'react';
 import RenderItem from '../components/RenderItem';
 import axiosInstance from '../utils/axiosConfig';
 import { AntDesign } from '@expo/vector-icons';
+import { useAuthContext } from '../context/AuthProvider';
 
 export default function HomeScreen({ route, navigation }) {
+  const { user } = useAuthContext();
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [isLastPage, setIsLastPage] = useState(false);
@@ -35,6 +37,7 @@ export default function HomeScreen({ route, navigation }) {
   }, [route.params?.newTweetAdded]);
 
   const getAllTweets = () => {
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${user.token}`;
     axiosInstance
       .get(`/tweets?page=${page}`)
       .then((res) => {

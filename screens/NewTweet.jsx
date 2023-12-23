@@ -10,10 +10,12 @@ import {
   View,
 } from 'react-native';
 import axiosInstance from '../utils/axiosConfig';
+import { useAuthContext } from '../context/AuthProvider';
 
 export default function NewTweet({ navigation }) {
   const [tweet, setTweet] = useState('');
   const [loading, isLoading] = useState(false);
+  const { user } = useAuthContext();
 
   const sendTweet = () => {
     if (tweet.length === 0) {
@@ -22,6 +24,7 @@ export default function NewTweet({ navigation }) {
     }
 
     isLoading(true);
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${user.token}`;
     axiosInstance
       .post('/tweets', {
         body: tweet,

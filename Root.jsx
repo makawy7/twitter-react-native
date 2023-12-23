@@ -112,10 +112,11 @@ export default function App() {
         if (userItem) {
           setUser(JSON.parse(userItem));
         }
-        setIsLoading(false);
       })
       .catch((err) => {
         console.log(err);
+      })
+      .finally(() => {
         setIsLoading(false);
       });
   }, []);
